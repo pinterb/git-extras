@@ -1,0 +1,154 @@
+#!/bin/sh
+
+set_hooks_commit_msg()
+{
+    top_dir=`git rev-parse --show-toplevel`
+    f="${top_dir}/.git/hooks/commit-msg";
+    # NOTE: This seems to work as openstack's site is publicly accessible.
+    #       However, as soon as our ACE is configured, we should use our own Gerrit server!
+    u="https://review.openstack.org/tools/hooks/commit-msg";
+
+    if [ -x "$f" ]; then
+        return;
+    fi
+
+    curl -o $f $u || wget -O $f $u;
+
+    chmod +x $f;
+
+    GIT_EDITOR=true git commit --amend
+}
+
+add_remote()
+{
+    username=$1
+    gerrithost=$2
+    gerritport=$3
+    project=$4
+
+    echo "No remote set, testing ssh://$username@$gerrithost"
+    if ssh -p $gerritport -o StrictHostKeyChecking=no $username@$gerrithost gerrit ls-projects >/dev/null 2>&1
+    then
+        echo "$username@$gerrithost:$gerritport worked."
+        echo "Creating a git remote called gerrit that maps to:"
+        echo "  ssh://$username@$gerrithost:$gerritport/$project"
+        git remote add gerrit ssh://$username@$gerrithost:$gerritport/$project
+        return 0
+    fi
+    return 1
+}
+
+check_remote()
+{
+    if ! git remote | grep gerrit >/dev/null 2>&1
+    then
+        
+        if add_remote $1 $2 $3 $4
+        then
+            return 0
+        else
+            echo "Your local Gerrit project settings do not work."
+            echo "Please review your .gerrit settings and try again."
+            exit 1
+        fi
+    fi
+}
+
+rebase_changes()
+{
+    git fetch;
+
+    GIT_EDITOR=true git rebase -i origin/$branch || exit $?;
+}
+
+
+assert_diverge()
+{
+    if ! git diff origin/$branch..HEAD | grep -q .
+    then
+        echo "No changes between the current branch and origin/$branch."
+        exit 1
+    fi
+}
+
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null) || :;
+if [ -z "$GIT_DIR" ]
+then
+   echo "Not a git repository"
+   exit 1
+fi
+
+cd $GIT_DIR; cd ..
+PROJECT_DIR=`pwd`
+GERRIT_DIR=$PROJECT_DIR/.gerrit
+
+if [ ! -d "$GERRIT_DIR" ]
+then
+   echo "This project has not be configured to submit changes to Gerrit for review.\n"
+   echo "Please run 'git gerrit-init' to configure this project."
+   exit 1
+fi
+
+if [ -f "$GERRIT_DIR/host" ]
+then
+   GERRIT_HOST=`cat $GERRIT_DIR/host`
+else
+   echo "Gerrit's remote host has not been set.\n"
+   echo "Please run 'git gerrit-host' to set the remote host or run 'git gerrit-init'"
+   echo "to re-initialize all Gerrit properties on this project."
+   exit 1
+fi
+
+if [ -f "$GERRIT_DIR/port" ]
+then
+   GERRIT_PORT=`cat $GERRIT_DIR/port`
+else
+   echo "Gerrit's remote port number has not been set.\n"
+   echo "Please run 'git gerrit-port' to set the remote port or run 'git gerrit-init'"
+   echo "to re-initialize all Gerrit properties on this project."
+   exit 1
+fi
+
+if [ -f "$GERRIT_DIR/user" ]
+then
+   GERRIT_USER=`cat $GERRIT_DIR/user`
+else
+   echo "Your Gerrit user name has not been set.\n"
+   echo "Please run 'git gerrit-user' to set your user name or run 'git gerrit-init'"
+   echo "to re-initialize all Gerrit properties on this project."
+   exit 1
+fi
+
+if [ -f "$GERRIT_DIR/project" ]
+then
+   GERRIT_REPO=`cat $GERRIT_DIR/project`
+else
+   echo "Gerrit's project name has not been set.\n"
+   echo "Please run 'git gerrit-project' to set the project name or run 'git gerrit-init'"
+   echo "to re-initialize all Gerrit properties on this project."
+   exit 1
+fi
+
+branch="master";
+
+set_hooks_commit_msg;
+
+check_remote $GERRIT_USER $GERRIT_HOST $GERRIT_PORT $GERRIT_REPO
+
+rebase_changes;
+
+assert_diverge;
+
+jira=$(git log -1 --format='%s %b' | perl -nle 'if (/JIRA\s+(\w+\-\d+)/i) {print lc("$1")}')
+if [ "$DRY_RUN" = 1 ]; then
+    drier='echo -e Please use the following command to send your commits to review:\n\n'
+else
+    drier=
+fi
+
+local_branch=`git branch | grep -Ei "\* (.*)" | cut -f2 -d' '`
+if [ -z "$jira" ]; then
+    $drier git push gerrit HEAD:refs/for/$branch/$local_branch;
+else
+    $drier git push gerrit HEAD:refs/for/$branch/jira/$jira;
+fi

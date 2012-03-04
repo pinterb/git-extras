@@ -1,0 +1,36 @@
+#!/bin/bash
+
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null) || :;
+if [ -z "$GIT_DIR" ]
+then
+   echo "Not a git repository"
+   exit 1
+fi
+
+cd $GIT_DIR; cd ..
+PROJECT_DIR=`pwd`
+GERRIT_DIR=$PROJECT_DIR/.gerrit
+
+GIT_REMOTE_URL=$(git config remote.$(git config branch.master.remote).url 2>/dev/null) || :;
+# remove the protocol
+URL=`git config remote.$(git config branch.master.remote).url | sed -e 's|^git@||' | sed -e 's|^https://||' | sed -e 's|^http://||' | sed -e 's|^ssh://||'`
+
+if [ -d "$GERRIT_DIR" ]
+then
+   cat /dev/null > /tmp/gerrit-init
+else
+   mkdir $GERRIT_DIR
+   echo "This directory is used by Gerrit." > $GERRIT_DIR/README
+   echo .gerrit >> .gitignore
+fi
+
+if [ -f "$GERRIT_DIR/project" ]
+then
+   project=`cat $GERRIT_DIR/project`
+else
+   project="$(echo $URL | grep / | cut -d/ -f2-)"
+fi
+
+read -p "project (ie repo): " -i "$project" -e input
+project="${input:-$project}"
+echo $project > $GERRIT_DIR/project

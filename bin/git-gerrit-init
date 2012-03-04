@@ -1,0 +1,62 @@
+#!/bin/sh
+
+add_remote()
+{
+    username=$1
+    project=$2
+    gerrithost=$3
+
+    echo "No remote set, testing ssh://$username@$gerrithost:29418"
+    if ssh -p29418 -o StrictHostKeyChecking=no $username@$gerrithost gerrit ls-projects >/dev/null 2>&1
+    then
+        echo "$username@$gerrithost:29418 worked."
+        echo "Creating a git remote called gerrit that maps to:"
+        echo "  ssh://$username@$gerrithost:29418/$project"
+        git remote add gerrit ssh://$username@$gerrithost:29418/$project
+        return 0
+    fi
+    return 1
+}
+
+check_remote()
+{
+    if ! git remote | grep gerrit >/dev/null 2>&1
+    then
+        origin_project=`git remote show origin | grep 'Fetch URL' | perl -nle '@fields = split(m|[:/]|); $len = $#fields; print $fields[$len];'`
+        
+        if add_remote $USERNAME $origin_project $GERRITHOST
+        then
+            return 0
+        else
+            echo "Your local name doesn't work on Gerrit."
+            echo -n "Enter Gerrit username (usually your last name or truncated last name): "
+            read gerrit_user
+            
+            if add_remote $gerrit_user $origin_project $GERRITHOST
+            then
+                return 0
+            else
+                echo "Can't infer where gerrit is - please set a remote named"
+                echo "gerrit manually and then try again."
+                echo
+                echo "For more information, please see:"
+                echo "\thttps://servicesportal.cdw.com/secure/hms/wiki/dcapps/Gerrit_Workflow"
+                exit 1
+            fi
+        fi
+    fi
+}
+
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null) || :;
+if [ -z "$GIT_DIR" ]
+then
+   echo "Not a git repository"
+   exit 1
+fi
+
+echo "Please enter the following Gerrit project settings:"
+
+git gerrit-project
+git gerrit-host
+git gerrit-port
+git gerrit-user
