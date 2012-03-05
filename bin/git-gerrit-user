@@ -21,7 +21,8 @@ then
 else
    mkdir $GERRIT_DIR
    echo "This directory is used by Gerrit." > $GERRIT_DIR/README
-   echo .gerrit >> .gitignore
+   #echo .gerrit >> .gitignore
+   echo .gerrit >> $GIT_DIR/info/exclude
 fi
 
 if [ -f "$GERRIT_DIR/user" ]
