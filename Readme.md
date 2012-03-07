@@ -56,6 +56,8 @@ $ brew install git-extras
  - `git refactor`
  - `git bug`
  - `git promote`
+ - `git gerrit-init`
+ - `git gerrit-review`
 
 ## extras
 
