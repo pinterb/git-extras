@@ -445,3 +445,11 @@ Set up a git repository (if one doesn't exist), add all files, and make an initi
 ## git-touch [filename]
 
 Call `touch` on the given file, and add it to the current index. One-step creation of new files.
+
+## git-gerrit-init
+
+One time initialization of a cloned Gerrit repo will allow you to push your changesets for review.
+
+## git-gerrit-review
+
+Push your topic branch changeset to Gerrit for review.   
