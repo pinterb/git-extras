@@ -22,6 +22,7 @@ else
    mkdir $GERRIT_DIR
    echo "This directory is used by Gerrit." > $GERRIT_DIR/README
    #echo .gerrit >> .gitignore
+   mkdir $GIT_DIR/info
    echo .gerrit >> $GIT_DIR/info/exclude
 fi
 
