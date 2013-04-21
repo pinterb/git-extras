@@ -13,7 +13,7 @@ $ make install
 One-liner:
 
 ```bash
-$ curl https://raw.github.com/visionmedia/git-extras/master/bin/git-extras | INSTALL=y sh
+$ (cd /tmp && git clone --depth 1 https://github.com/visionmedia/git-extras.git && cd git-extras && sudo make install)
 ```
 
 [MacPorts](http://www.macports.org/)
@@ -22,11 +22,17 @@ $ curl https://raw.github.com/visionmedia/git-extras/master/bin/git-extras | INS
 $ sudo port install git-extras
 ```
 
-[Brew](github.com/mxcl/homebrew/) (buggy):
+[Brew](http://github.com/mxcl/homebrew/) (buggy):
 
 ```bash
 $ brew install git-extras
 ```
+
+## Screencasts
+
+  Just getting started? Check out these screencasts:
+
+ - [introduction](https://vimeo.com/45506445) -- covering git-ignore, git-setup, git-changelog, git-release, git-effort and more
 
 ## Commands
 
@@ -45,6 +51,7 @@ $ brew install git-extras
  - `git graft`
  - `git alias`
  - `git ignore`
+ - `git info`
  - `git release`
  - `git contrib`
  - `git repl`
@@ -52,14 +59,16 @@ $ brew install git-extras
  - `git gh-pages`
  - `git setup`
  - `git touch`
+ - `git obliterate`
  - `git feature`
  - `git refactor`
  - `git bug`
  - `git promote`
  - `git gerrit-init`
  - `git gerrit-review`
+ - `git local-commits`
 
-## extras
+## git-extras
 
 The main `git-extras` command.
 
@@ -82,7 +91,7 @@ $ git extras update
 ```
 
 
-## gh-pages
+## git-gh-pages
 
 Sets up the `gh-pages` branch.  (See [GitHub Pages](http://pages.github.com/) documentation.)
 
@@ -132,10 +141,12 @@ Outputs a repo summary:
 ```bash
 $ git summary
 
-project: git-extras
-commits: 163
-files  : 93
-authors: 
+project  : git-extras
+repo age : 10 months ago
+commits  : 163
+active   : 60 days
+files    : 93
+authors  :
    97	Tj Holowaychuk          59.5%
    37	Jonhnny Weslley         22.7%
 	8	Kenneth Reitz           4.9%
@@ -152,7 +163,7 @@ authors:
 	1	Guillermo Rauch         0.6%
 ```
 
-This command can also take a *commitish*, and will print a summary for commits in 
+This command can also take a *commitish*, and will print a summary for commits in
 the commmitish range:
 
 ```bash
@@ -170,9 +181,15 @@ node (master): git effort --above 15 {src,lib}/*
   ![git effort](http://f.cl.ly/items/0b0w0S2K1d100e2T1a0D/Screen%20Shot%202012-02-08%20at%206.43.34%20PM.png)
 
   If you wish to ignore files with commits `<=` a value you may use `--above`:
-  
+
 ```
 $ git effort --above 5
+```
+
+  By default `git ls-files` is used, however you may pass one or more files to `git-effort(1)`, for example:
+
+```
+$ git effort bin/* lib/*
 ```
 
 ## git-repl
@@ -194,12 +211,6 @@ bin/git-ignore
 bin/git-release
 
 git> quit
-```
-
-  By default `git ls-files` is used, however you may pass one or more files to `git-effort(1)`, for example:
-
-```
-$ git effort bin/* lib/*
 ```
 
 ## git-commits-since [date]
@@ -265,7 +276,7 @@ $ git release 0.1.0
 ```
 
 Does the following:
-  
+
   - Executes _.git/hooks/pre-release.sh_ (if present)
   - Commits changes (to changelog etc) with message "Release &lt;tag&gt;"
   - Tags with the given &lt;tag&gt;
@@ -324,6 +335,62 @@ $ git ignore
 build
 *.o
 *.log
+```
+
+# git-info
+
+Show information about the repo:
+
+```bash
+$ git info
+
+    ## Remote URLs:
+
+    origin              git@github.com:sampleAuthor/git-extras.git (fetch)
+    origin              git@github.com:sampleAuthor/git-extras.git (push)
+
+    ## Remote Branches:
+
+    origin/HEAD -> origin/master
+    origin/myBranch
+
+    ## Local Branches:
+
+    myBranch
+    * master
+
+    ## Most Recent Commit:
+
+    commit e3952df2c172c6f3eb533d8d0b1a6c77250769a7
+    Author: Sample Author <sampleAuthor@gmail.com>
+
+    Added git-info command.
+
+    Type 'git log' for more commits, or 'git show <commit id>' for full commit details.
+
+    ## Configuration (.git/config):
+
+    color.diff=auto
+    color.status=auto
+    color.branch=auto
+    user.name=Sample Author
+    user.email=sampleAuthor@gmail.com
+    core.repositoryformatversion=0
+    core.filemode=true
+    core.bare=false
+    core.logallrefupdates=true
+    core.ignorecase=true
+    remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+    remote.origin.url=git@github.com:mub/git-extras.git
+    branch.master.remote=origin
+    branch.master.merge=refs/heads/master
+
+```
+
+If you wish to omit the config section, you may use `--no-config`:
+
+```bash
+$ git info --no-config
 ```
 
 ## git-create-branch &lt;name&gt;
@@ -387,7 +454,7 @@ $ git squash fixed-cursor-styling "Fixed cursor styling"
 ## git-changelog
 
 Populate a file whose name matches `change|history -i_` with commits
-since the previous tag.  (If there are no tags, populates commits since the project began.) 
+since the previous tag.  (If there are no tags, populates commits since the project began.)
 
 Opens the changelog in `$EDITOR` when set.
 
@@ -455,3 +522,15 @@ One time initialization of a cloned Gerrit repo will allow you to push your chan
 ## git-gerrit-review
 
 Push your topic branch changeset to Gerrit for review.   
+
+## git-obliterate [filename]
+
+Completely remove a file from the repository, including past commits and tags.
+
+```bash
+git obliterate secrets.json
+```
+
+## git-local-commits
+
+List all commits on the local branch that have not yet been sent to origin. Any additional arguments will be passed directly to git log.

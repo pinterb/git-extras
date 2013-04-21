@@ -21,10 +21,12 @@ Shows a summary of the repository.
 
     $ git summary
 
-    project: express
-    commits: 1893
-    files  : 111
-    authors:
+    project  : express
+    repo age : 10 months ago
+    commits  : 1893
+    active   : 93 days
+    files    : 111
+    authors  :
      1285 visionmedia
       478 Tj Holowaychuk
        48 Aaron Heckmann
@@ -55,8 +57,8 @@ Written by Tj Holowaychuk &lt;<tj@vision-media.ca>&gt;
 
 ## REPORTING BUGS
 
-&lt;<http://github.com/visionmedia/git-extras/issues>&gt;
+&lt;<https://github.com/visionmedia/git-extras/issues>&gt;
 
 ## SEE ALSO
 
-&lt;<http://github.com/visionmedia/git-extras>&gt;
+&lt;<https://github.com/visionmedia/git-extras>&gt;
