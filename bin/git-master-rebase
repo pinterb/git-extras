@@ -1,0 +1,35 @@
+#!/bin/bash
+
+branch=master
+
+rebase_changes()
+{
+    git fetch;
+
+    GIT_EDITOR=true git rebase -i origin/$branch || exit $?;
+}
+
+assert_diverge()
+{
+    if ! git diff origin/$branch..HEAD | grep -q .
+    then
+        echo "No changes between the current branch and origin/$branch."
+        exit 1
+    fi
+}
+
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null) || :;
+if [ -z "$GIT_DIR" ]
+then
+   echo "Not a git repository"
+   exit 1
+fi
+
+cd $GIT_DIR; cd ..
+PROJECT_DIR=`pwd`
+CURR_BRANCH=`git name-rev HEAD | awk "{ print \\$2 }"`
+echo $CURR_BRANCH
+CURR_BRANCH2=`git branch | grep -Ei "\* (.*)" | cut -f2 -d' '`
+echo $CURR_BRANCH2
+
+rebase_changes
