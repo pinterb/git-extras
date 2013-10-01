@@ -67,6 +67,7 @@ $ brew install git-extras
  - `git gerrit-init`
  - `git gerrit-review`
  - `git local-commits`
+ - `git archive-file`
 
 ## git-extras
 
@@ -459,9 +460,9 @@ since the previous tag.  (If there are no tags, populates commits since the proj
 Opens the changelog in `$EDITOR` when set.
 
 ```bash
-$ git changelog && cat History.md
+$ git changelog --tag 1.5.2 && cat History.md
 
-n.n.n / 2010-08-05
+1.5.2 / 2010-08-05
 ==================
 
 * Docs for git-ignore. Closes #3
@@ -534,3 +535,7 @@ git obliterate secrets.json
 ## git-local-commits
 
 List all commits on the local branch that have not yet been sent to origin. Any additional arguments will be passed directly to git log.
+
+## git-archive-file
+
+Creates an zip archive of the current git repository. The name of the archive will depend on the current HEAD of your git respository.
